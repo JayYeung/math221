@@ -4,11 +4,11 @@ To install the necessary dependencies for this project, follow these steps:
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/your-repo.git
+    git clone https://github.com/JayYeung/math221.git
     ```
 2. Navigate to the project directory:
     ```sh
-    cd your-repo
+    cd math221
     ```
 3. Create a new conda environment:
     ```sh
