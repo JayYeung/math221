@@ -26,10 +26,10 @@ test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, d
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-model = MLP_rand(p=1, block_size=8).to(device)
+model = MLP_rand(p=0.7, block_size=8).to(device)
 # model = MLP().to(device)
 
-print(model)
+model.summary()
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)

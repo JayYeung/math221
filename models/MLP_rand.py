@@ -1,13 +1,14 @@
 import torch
 import torch.nn as nn
+from torchinfo import summary
 
 class MLP_rand(nn.Module):
-    def __init__(self, p=0.5, block_size=4):
+    def __init__(self, p=0.5, block_size=4, size=32):
         super(MLP_rand, self).__init__()
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(28 * 28, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc3 = nn.Linear(16, 10)
+        self.fc1 = nn.Linear(28 * 28, size)
+        self.fc2 = nn.Linear(size, size)
+        self.fc3 = nn.Linear(size, 10)
         # self.fc4 = nn.Linear(128, 10)
         self.relu = nn.ReLU()
 
@@ -37,7 +38,7 @@ class MLP_rand(nn.Module):
                     ] = 0
                     zeroed += block_size ** 2
         
-        print(f'Zeroed {zeroed} out of {rows * cols} weights, proportion = {zeroed / (rows * cols)}')
+        # print(f'Zeroed {zeroed} out of {rows * cols} weights, proportion = {zeroed / (rows * cols)} ({float(p)})')
         
         return mask
 
@@ -50,6 +51,9 @@ class MLP_rand(nn.Module):
             self.fc2.weight.mul_(self.mask)
 
         x = self.relu(self.fc2(x))
-        # x = self.relu(self.fc3(x))
-        x = self.fc3(x)
+        x = self.relu(self.fc3(x))
+
         return x
+
+    def summary(self):
+        summary(self, input_size=(1, 28, 28))

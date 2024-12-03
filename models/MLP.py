@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torchinfo import summary
 
 class MLP(nn.Module):
     def __init__(self):
@@ -17,3 +18,6 @@ class MLP(nn.Module):
         # x = self.relu(self.fc3(x))
         x = self.fc3(x)  
         return x
+
+    def summary(self):
+        summary(self, input_size=(1, 28, 28))
