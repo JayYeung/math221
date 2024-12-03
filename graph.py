@@ -33,7 +33,7 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 plot_df = []
 
-for p in tqdm(np.linspace(0.1, 0.9, 20)):
+for p in tqdm(np.linspace(0.1, 0.9, 100)):
     model = MLP_rand(p=p, block_size=4).to(device)
     # model.summary()
 
@@ -89,6 +89,7 @@ for p in tqdm(np.linspace(0.1, 0.9, 20)):
         'train_time': train_time,
         'inference_time': inference_time
     })
+    print(f'p = {p}, Test Accuracy: {test_accuracy:.2f}%, Train Time: {train_time:.2f} seconds, Inference Time: {inference_time:.2f} seconds')
 
 plot_df = pd.DataFrame(plot_df)
 

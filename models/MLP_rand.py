@@ -51,7 +51,7 @@ class MLP_rand(nn.Module):
             self.fc2.weight.mul_(self.mask)
 
         x = self.relu(self.fc2(x))
-        x = self.relu(self.fc3(x))
+        x = self.fc3(x)
 
         return x
 
