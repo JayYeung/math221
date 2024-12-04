@@ -9,32 +9,46 @@ import matplotlib.pyplot as plt
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-num_epochs = 10
-batch_size = 100
-learning_rate = 0.001
+epochs = 10
+lr = 0.001
 
-train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transforms.ToTensor(), download=True)
-test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transforms.ToTensor())
-train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
+# train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transforms.ToTensor(), download=True)
+# test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transforms.ToTensor())
+# train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=True)
+# test_loader = DataLoader(dataset=test_dataset, batch_size=100, shuffle=False)
 
-model = SparseMLP(pruning_percent=.95, start_itr=2000)
+transform = transforms.Compose([ transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,)) ])
+
+
+train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
+test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
+
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+
+
+# model = SparseMLP(in_dimension=(32 * 32 * 3),
+#             out_dimension=10,
+#             pruning_percent=.95, start_itr=2000)
+model = SparseMLP(in_dimension=(28 * 28),
+            out_dimension=10,
+            pruning_percent=.95, start_itr=2000)
 model = model.to(device)
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = optim.Adam(model.parameters(), lr=lr)
 
 # Training loop
 total_step = len(train_loader)
-print("\nBeginning main training loop...")
-for epoch in range(num_epochs):
-    print(f"\nEpoch [{epoch+1}/{num_epochs}]")
-    for i, (images, labels) in enumerate(train_loader):
-        images = images.to(device)
+for epoch in range(epochs):
+    print(f"\nEpoch [{epoch+1}/{epochs}]")
+
+    for i, (inputs, labels) in enumerate(train_loader):
+        inputs = inputs.to(device)
         labels = labels.to(device)
 
-        outputs = model(images)
+        outputs = model(inputs)
         loss = model.compute_loss(criterion, outputs, labels)
 
         optimizer.zero_grad()
@@ -45,7 +59,7 @@ for epoch in range(num_epochs):
         model.update_iteration()
 
         if (i+1) % 100 == 0:
-            print(f'Training - Epoch [{epoch+1}/{num_epochs}], '
+            print(f'Training - Epoch [{epoch+1}/{epochs}], '
                   f'Step [{i+1}/{total_step}], '
                   f'Loss: {loss.item():.4f}, '
                   f'Theta: {model.theta:.4f}')

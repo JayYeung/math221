@@ -23,24 +23,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 learning_rate = 0.001
 epochs = 10
 
-train_dataset = datasets.MNIST(root='./data',
-                                train=True,
-                                transform=transforms.ToTensor(),
-                                download=True)
-
-test_dataset = datasets.MNIST(root='./data',
-                               train=False,
-                               transform=transforms.ToTensor())
-
-train_loader = DataLoader(dataset=train_dataset,
-                         batch_size=batch_size,
-                         shuffle=True)
-
-test_loader = DataLoader(dataset=test_dataset,
-                        batch_size=batch_size,
-                        shuffle=False)
-
-
 def see_weights(model, epoch):
     for i, layer in enumerate([model.fc1, model.fc2, model.fc3]):
         total_weights = layer.weight.data.numel()
@@ -76,7 +58,6 @@ def train(model, criterion, optimizer, epochs, train_loader):
         model.update_iteration(train_loader, device, criterion)
 
         print(f"Epoch {epoch + 1}, Loss: {loss.item()}")
-        print(f'Accuracy after epoch {epoch + 1}: {test(model, criterion)}')
         see_weights(model, epoch)
 
 
@@ -84,7 +65,6 @@ def train(model, criterion, optimizer, epochs, train_loader):
 
 def test(model, criterion, test_loader):
     model.eval()
-    start_time = time.time()
     correct = 0
     total = 0
 
@@ -97,16 +77,16 @@ def test(model, criterion, test_loader):
             correct += (predicted == target).sum().item()
     acc = 100 * correct / total
 
-    return acc, time.time() - start_time
+    return acc
 
-model = MLPAccuracyPrune(start_itr=2, pruning_percent=0.5).to(device)
+# model = MLPAccuracyPrune(start_itr=2, pruning_percent=0.5).to(device)
 
-# model.summary()
+# # model.summary()
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+# criterion = nn.CrossEntropyLoss()
+# optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-train_time = train(model, criterion, optimizer, epochs)
-test_accuracy, inference_time = test(model, criterion)
+# train_time = train(model, criterion, optimizer, epochs, train_loader)
+# test_accuracy, inference_time = test(model, criterion)
 
-print(test_accuracy)
+# print(test_accuracy)
