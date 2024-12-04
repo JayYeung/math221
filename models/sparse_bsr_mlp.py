@@ -43,9 +43,9 @@ class SparseBSRLinear(nn.Module):
 
     def forward(self, input):
         sparse_bsr = torch.sparse_bsr_tensor(
-            self.crow_indices.to(device),
-            self.col_indices.to(device),
-            self.values.to(device),
+            self.crow_indices,
+            self.col_indices,
+            self.values,
             size=(self.out_features, self.in_features),
             requires_grad=True,
         )
