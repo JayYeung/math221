@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 # from models.cnn import CNN
 # from models.mlp import MLP
 # from models.mlp_rand import MLP_rand
+from models.mlp_group_lasso import MLP_group_lasso
 
 from models.sparse_bsr_mlp import SparseMLP
 # from models.sparse_bsr_mask_mlp import SparseMLP  # DOESN'T WORK
@@ -47,7 +48,7 @@ def train(model, criterion, optimizer, epochs):
             data, target = data.to(device), target.to(device)
 
             outputs = model(data)
-            loss = criterion(outputs, target)
+            loss = model.compute_loss(criterion, outputs, target)
 
             optimizer.zero_grad()
             loss.backward()
@@ -78,7 +79,7 @@ def test(model, criterion):
 for block_size, p in product(2 ** np.arange(4, 8), np.linspace(0.1, 0.9, 9)):
     print(f"\nBLOCK_SIZE={block_size}, p={p}")
 
-    model = SparseMLP(p=p, block_size=block_size).to(device)
+    model = MLP_group_lasso(p=p, block_size=block_size).to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
