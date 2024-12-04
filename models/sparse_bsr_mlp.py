@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class SparseBSRLinear(nn.Module):
-    def __init__(self, in_features, out_features, p, block_size):
+    def __init__(self, in_features, out_features, block_size, crow_indices, col_indices, values):
         super().__init__()
 
         self.in_features = in_features
@@ -21,18 +21,6 @@ class SparseBSRLinear(nn.Module):
 
         num_blocks_row = out_features // block_size
         num_blocks_col = in_features // block_size
-
-        crow_indices = [0]
-        col_indices = []
-        values = []
-
-        for i in range(num_blocks_row):
-            for j in range(num_blocks_col):
-                if torch.rand(1).item() >= p:
-                    col_indices.append(j)
-                    values.append(torch.randn(block_size, block_size))
-
-            crow_indices.append(len(col_indices))
 
         self.crow_indices = nn.Parameter(torch.tensor(crow_indices, dtype=torch.int64), requires_grad=False)
         self.col_indices = nn.Parameter(torch.tensor(col_indices, dtype=torch.int64), requires_grad=False)
@@ -51,8 +39,6 @@ class SparseBSRLinear(nn.Module):
         )
 
         output = _triton_ops.bsr_dense_mm(sparse_bsr, input.to(device).T).T
-
-        # output = torch.mm(sparse_bsr, input.to(device).T).T
 
         return output + self.bias.to(device)
 

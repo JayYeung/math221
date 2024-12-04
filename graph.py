@@ -10,7 +10,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
 # from models.cnn import CNN
-# from models.mlp import MLP
+from models.mlp import MLP
 # from models.mlp_rand import MLP_rand
 
 from models.sparse_bsr_mlp import SparseMLP
@@ -78,7 +78,8 @@ def test(model, criterion):
 for block_size, p in product(2 ** np.arange(4, 8), np.linspace(0.1, 0.9, 9)):
     print(f"\nBLOCK_SIZE={block_size}, p={p}")
 
-    model = SparseMLP(p=p, block_size=block_size).to(device)
+    # model = SparseMLP(p=p, block_size=block_size).to(device)
+    model = MLP()
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
