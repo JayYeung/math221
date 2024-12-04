@@ -43,4 +43,4 @@ class MLP_group_lasso(nn.Module):
         return base_loss + group_lasso_loss
 
     def summary(self):
-        summary(self, input_size=(1, 28, 28))
+        summary(self, input_size=(3, 32, 32))

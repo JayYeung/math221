@@ -9,9 +9,9 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
 # from models.cnn import CNN
-from models.mlp import MLP
+# from models.mlp import MLP
 # from models.mlp_rand import MLP_rand
-
+from models.mlp_accuracy_based import MLPAccuracyPrune
 from models.sparse_bsr_mlp import SparseMLP
 # from models.sparse_bsr_mask_mlp import SparseMLP  # DOESN'T WORK
 
@@ -26,16 +26,22 @@ batch_size = 64
 learning_rate = 0.001
 epochs = 10
 
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.1307,), (0.3081,))
-])
+train_dataset = datasets.MNIST(root='./data',
+                                train=True,
+                                transform=transforms.ToTensor(),
+                                download=True)
 
-train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
-test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
+test_dataset = datasets.MNIST(root='./data',
+                               train=False,
+                               transform=transforms.ToTensor())
 
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+train_loader = DataLoader(dataset=train_dataset,
+                         batch_size=batch_size,
+                         shuffle=True)
+
+test_loader = DataLoader(dataset=test_dataset,
+                        batch_size=batch_size,
+                        shuffle=False)
 
 def see_weights(model, epoch):
     for i, layer in enumerate([model.fc1, model.fc2, model.fc3]):
@@ -57,19 +63,24 @@ def see_weights(model, epoch):
 def train(model, criterion, optimizer, epochs):
     model.train()
 
-    for epoch in tqdm(range(epochs)):
-        for batch_idx, (data, target) in enumerate(train_loader):
+    for epoch in range(epochs):
+        for batch_idx, (data, target) in enumerate(tqdm(train_loader)):
             data, target = data.to(device), target.to(device)
-
             outputs = model(data)
-            loss = model.compute_loss(criterion, outputs, target)
-            
-            model.update_iteration()
+            loss = criterion(outputs, target)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
+        # Update pruning logic
+        model.update_iteration(train_loader, device, criterion)
+
+        print(f"Epoch {epoch + 1}, Loss: {loss.item()}")
+        print(f'Accuracy after epoch {epoch + 1}: {test(model, criterion)}')
         see_weights(model, epoch)
+    
+
 
 
 def test(model, criterion):
@@ -87,11 +98,11 @@ def test(model, criterion):
             correct += (predicted == target).sum().item()
     acc = 100 * correct / total
 
-    return acc, end_time - start_time
+    return acc, time.time() - start_time
 
-model = MLP(start_itr=2, pruning_percent=0.9).to(device)
+model = MLPAccuracyPrune(start_itr=2, pruning_percent=0.5).to(device)
 
-model.summary()
+# model.summary()
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
