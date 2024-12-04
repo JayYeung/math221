@@ -4,6 +4,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from models.mlp_group_lasso import MLP_group_lasso
+from models.mlp_accuracy_based import MLP
 
 import time
 from tqdm import tqdm
@@ -41,8 +42,8 @@ def see_weights(model, epoch):
         weights = layer.weight.data.cpu().numpy()
         plt.imshow(weights, cmap='seismic', interpolation='nearest')
         plt.colorbar()
-        plt.title(f'MLP_group_lasso {epoch} Layer {i+1} Weights')
-        plt.savefig(f'weight_map_images/MLP_group_lasso_{epoch}_Layer{i+1}_weights.png')
+        plt.title(f'MLP_accuracy_based {epoch} Layer {i+1} Weights')
+        plt.savefig(f'weight_map_images/MLP_accuracy_based_{epoch}_Layer{i+1}_weights.png')
         plt.close()
     print("Weight visualizations saved as PNG files")
 
@@ -56,6 +57,8 @@ def train(model, criterion, optimizer, epochs):
 
             outputs = model(data)
             loss = model.compute_loss(criterion, outputs, target)
+            
+            model.update_iteration()
 
             optimizer.zero_grad()
             loss.backward()
@@ -84,7 +87,7 @@ def test(model, criterion):
 
     return acc, end_time - start_time
 
-model = MLP_group_lasso().to(device)
+model = MLP(start_itr=2, pruning_percent=0.9).to(device)
 
 model.summary()
 
