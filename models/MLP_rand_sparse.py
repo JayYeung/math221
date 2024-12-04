@@ -24,7 +24,7 @@ class SparseBSRLinear(nn.Module):
 
         for i in range(num_blocks_row):
             for j in range(num_blocks_col):
-                if torch.rand(1).item() > p:
+                if torch.rand(1).item() <= p:
                     col_indices.append(j)
                     values.append(torch.randn(block_size, block_size))
 
@@ -54,12 +54,12 @@ class SparseBSRLinear(nn.Module):
 
 
 class SparseMLP(nn.Module):
-    def __init__(self, p=0.5, block_size=4, size=128):
+    def __init__(self, p=0.5, block_size=4, size=256):
         super().__init__()
 
         self.flatten = nn.Flatten()
         self.relu = nn.ReLU()
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
 
         self.fc1 = nn.Linear(28 * 28, size)
         self.sfc = SparseBSRLinear(size, size, p=p, block_size=block_size)

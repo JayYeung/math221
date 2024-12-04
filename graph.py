@@ -12,7 +12,9 @@ from torch.utils.data import DataLoader
 from models.CNN import CNN
 from models.MLP import MLP
 from models.MLP_rand import MLP_rand
-from models.MLP_rand_sparse import SparseMLP
+# from models.MLP_rand_sparse import SparseMLP
+
+from models.SparseBlockedMLP import SparseMLP
 
 import time
 from tqdm import tqdm
@@ -23,7 +25,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Hyperparameters
 batch_size = 64
 learning_rate = 0.001
-num_epochs = 5
+epochs = 5
 
 # MNIST Dataset
 transform = transforms.Compose([
@@ -39,54 +41,54 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 plot_df = []
 
-for block_size, p in tqdm(product(2 ** np.arange(4, 7), np.arange(0.1, 0.9, 0.1))):
+
+def train(model, criterion, optimizer, epochs):
+    model.train()
+    start_time = time.time()
+
+    for epoch in range(epochs):
+        for batch_idx, (data, target) in enumerate(train_loader):
+            data, target = data.to(device), target.to(device)
+
+            outputs = model(data)
+            loss = criterion(outputs, target)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+    end_time = time.time()
+    return end_time - start_time
+
+def test(model, criterion):
+    model.eval()
+    start_time = time.time()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            outputs = model(data)
+            _, predicted = torch.max(outputs, 1)
+            total += target.size(0)
+            correct += (predicted == target).sum().item()
+    acc = 100 * correct / total
+    end_time = time.time()
+
+    return acc, end_time - start_time
+
+
+for block_size, p in tqdm(product(2 ** np.arange(4, 8), np.linspace(0.1, 0.9, 9))):
+    print(f"\n\n BLOCK_SIZE={block_size}, p={p} \n\n")
+
     model = SparseMLP(p=p, block_size=block_size).to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    # Training loop
-    def train():
-        model.train()
-        start_time = time.time()
-        for epoch in range(num_epochs):
-            for batch_idx, (data, target) in enumerate(train_loader):
-                data, target = data.to(device), target.to(device)
-
-                # Forward pass
-                outputs = model(data)
-                loss = criterion(outputs, target)
-
-                # Backward pass
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-                # if (batch_idx + 1) % 100 == 0:
-                #     print(f'Epoch [{epoch + 1}/{num_epochs}], Step [{batch_idx + 1}/{len(train_loader)}], Loss: {loss.item():.4f}')
-        end_time = time.time()
-        return end_time - start_time
-
-    # Evaluation loop
-    def test():
-        model.eval()
-        start_time = time.time()
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for data, target in test_loader:
-                data, target = data.to(device), target.to(device)
-                outputs = model(data)
-                _, predicted = torch.max(outputs, 1)
-                total += target.size(0)
-                correct += (predicted == target).sum().item()
-        test_accuracy = 100 * correct / total
-        # print(f'p = {p}, Test Accuracy: {test_accuracy:.2f}%')
-        end_time = time.time()
-        return test_accuracy, end_time - start_time
-
-    train_time = train()
-    test_accuracy, inference_time = test()
+    train_time = train(model, criterion, optimizer, epochs)
+    test_accuracy, inference_time = test(model, criterion)
 
     plot_df.append({
         'p': p,
@@ -94,6 +96,7 @@ for block_size, p in tqdm(product(2 ** np.arange(4, 7), np.arange(0.1, 0.9, 0.1)
         'train_time': train_time,
         'inference_time': inference_time
     })
+
     print(f'p = {p}, Test Accuracy: {test_accuracy:.2f}%, Train Time: {train_time:.2f} seconds, Inference Time: {inference_time:.2f} seconds')
 
 plot_df = pd.DataFrame(plot_df)
