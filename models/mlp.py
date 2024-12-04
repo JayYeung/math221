@@ -6,19 +6,22 @@ class MLP(nn.Module):
         super().__init__()
 
         self.flatten = nn.Flatten()
-        self.softmax = nn.Softmax(dim=1)
-        self.fc1 = nn.Linear(28 * 28, 1024)
-        self.fc2 = nn.Linear(1024, 512)
-        self.fc3 = nn.Linear(512, 10)
         self.relu = nn.ReLU()
 
+        self.fc1 = nn.Linear(28 * 28, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, 10)
+
+        self.features = nn.Sequential(
+            nn.Flatten(),
+            self.fc1,
+            nn.ReLU(),
+            self.fc2,
+            nn.ReLU(),
+            self.fc3
+        )
+
     def forward(self, x):
-        x = self.flatten(x)
-
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.fc3(x)
-
-        x = self.softmax(dim=1)
+        x = self.features(x)
 
         return x
