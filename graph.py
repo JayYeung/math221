@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from models.CNN import CNN
 from models.MLP import MLP
 from models.MLP_rand import MLP_rand
-from models.MLP_rand_sparse import SparseRandMLP
+from models.MLP_rand_sparse import SparseMLP
 
 import time
 from tqdm import tqdm
@@ -39,9 +39,8 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 plot_df = []
 
-for block_size, p in tqdm(product(2 ** np.arange(1, 6), np.arange(0.1, 0.9, 0.1))):
-    model = SparseRandMLP(p=p, block_size=block_size).to(device)
-    model.summary()
+for block_size, p in tqdm(product(2 ** np.arange(4, 7), np.arange(0.1, 0.9, 0.1))):
+    model = SparseMLP(p=p, block_size=block_size).to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -49,7 +48,7 @@ for block_size, p in tqdm(product(2 ** np.arange(1, 6), np.arange(0.1, 0.9, 0.1)
     # Training loop
     def train():
         model.train()
-        start_time = time.time() 
+        start_time = time.time()
         for epoch in range(num_epochs):
             for batch_idx, (data, target) in enumerate(train_loader):
                 data, target = data.to(device), target.to(device)
@@ -71,7 +70,7 @@ for block_size, p in tqdm(product(2 ** np.arange(1, 6), np.arange(0.1, 0.9, 0.1)
     # Evaluation loop
     def test():
         model.eval()
-        start_time = time.time() 
+        start_time = time.time()
         correct = 0
         total = 0
         with torch.no_grad():
@@ -88,7 +87,7 @@ for block_size, p in tqdm(product(2 ** np.arange(1, 6), np.arange(0.1, 0.9, 0.1)
 
     train_time = train()
     test_accuracy, inference_time = test()
-    
+
     plot_df.append({
         'p': p,
         'test_accuracy': test_accuracy,
