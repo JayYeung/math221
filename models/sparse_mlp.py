@@ -3,14 +3,15 @@ import torch.nn as nn
 import math
 from torchinfo import summary
 
-class MLP(nn.Module):
-    def __init__(self, pruning_percent, start_itr, group_size = 32, lasso_weight=1e-4):
-        super(MLP, self).__init__()
+class SparseMLP(nn.Module):
+    def __init__(self, pruning_percent, start_itr, block_size=32, lasso_weight=1e-4):
+        super().__init__()
+
         self.pruning_percent = pruning_percent
         self.start_itr = start_itr
         self.current_itr = 0
         self.theta = 0.0
-        self.group_size = group_size
+        self.block_size = block_size
         self.lasso_weight = lasso_weight
 
         self.flatten = nn.Flatten()
@@ -19,14 +20,11 @@ class MLP(nn.Module):
         self.fc3 = nn.Linear(512, 10)
         self.relu = nn.ReLU()
 
-        # Apply initial threshold
         self.apply_threshold()
 
     def update_iteration(self):
-        """Update current iteration and apply pruning if needed"""
         self.current_itr += 1
         if self.start_itr <= self.current_itr:
-            # Calculate exponential growth factor
             progress = (self.current_itr - self.start_itr) / 5000  # Assume 1000 iterations for full growth
             current_theta = self.pruning_percent * (1 - math.exp(-5 * progress))  # -5 controls curve steepness
             self.theta = max(0, min(current_theta, self.pruning_percent))  # Clamp between 0 and pruning_percent
@@ -34,7 +32,7 @@ class MLP(nn.Module):
 
     def apply_threshold(self):
         # Apply pruning to all linear layers
-        for layer in [self.fc1, self.fc2]:
+        for layer in [self.fc2]:
             self.zero_blocks(layer.weight.data)
             if layer.bias is not None:
                 self.zero_blocks(layer.bias.data.view(-1, 1))
@@ -87,9 +85,9 @@ class MLP(nn.Module):
         group_lasso_loss = 0.0
 
         # Group weights in blocks along the columns
-        num_groups = cols // self.group_size
+        num_groups = cols // self.block_size
         for g in range(num_groups):
-            group_weights = weight[:, g * self.group_size : (g + 1) * self.group_size]
+            group_weights = weight[:, g * self.block_size : (g + 1) * self.block_size]
             group_lasso_loss += torch.norm(group_weights, dim=1).sum()
 
         return self.lasso_weight * group_lasso_loss

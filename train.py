@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
 
 # from models.cnn import CNN
 from models.mlp import MLP
@@ -22,20 +20,8 @@ from models.mlp_group_lasso import MLP_group_lasso
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-batch_size = 64
 learning_rate = 0.001
 epochs = 10
-
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.1307,), (0.3081,))
-])
-
-train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
-test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
-
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 def see_weights(model, epoch):
     for i, layer in enumerate([model.fc1, model.fc2, model.fc3]):
@@ -54,7 +40,8 @@ def see_weights(model, epoch):
         plt.close()
     print("Weight visualizations saved as PNG files")
 
-def train(model, criterion, optimizer, epochs):
+
+def train(model, criterion, optimizer, epochs, train_loader):
     model.train()
 
     for epoch in tqdm(range(epochs)):
@@ -70,7 +57,7 @@ def train(model, criterion, optimizer, epochs):
         see_weights(model, epoch)
 
 
-def test(model, criterion):
+def test(model, criterion, test_loader):
     model.eval()
     start_time = time.time()
     correct = 0

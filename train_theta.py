@@ -4,51 +4,22 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from models.sparse_mlp import MLP
+from models.sparse_mlp import SparseMLP
+import matplotlib.pyplot as plt
 
-# Set random seed for reproducibility
-print("Setting random seed...")
-torch.manual_seed(42)
-
-# Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"Using device: {device}")
 
-# Hyperparameters
-print("\nInitializing hyperparameters...")
 num_epochs = 10
 batch_size = 100
 learning_rate = 0.001
-freq = 100  # Frequency parameter
-start_itr = 1000  # Start iteration
-ramp_itr = 2000  # Ramp iteration
-end_itr = 3000  # End iteration
 
-print("Loading CIFAR-10 dataset...")
-# CIFAR-10 dataset
-train_dataset = datasets.CIFAR10(root='./data',
-                                train=True,
-                                transform=transforms.ToTensor(),
-                                download=True)
+train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transforms.ToTensor(), download=True)
+test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transforms.ToTensor())
+train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
-test_dataset = datasets.CIFAR10(root='./data',
-                               train=False,
-                               transform=transforms.ToTensor())
-
-print("Creating data loaders...")
-# Data loader
-train_loader = DataLoader(dataset=train_dataset,
-                         batch_size=batch_size,
-                         shuffle=True)
-
-test_loader = DataLoader(dataset=test_dataset,
-                        batch_size=batch_size,
-                        shuffle=False)
-
-# Train model with pruning
-print("\n=== Starting training with pruning ===")
-model = MLP(pruning_percent=.90, start_itr=2000)
-print("Created pruning model")
+model = SparseMLP(pruning_percent=.95, start_itr=2000)
+model = model.to(device)
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
@@ -97,6 +68,9 @@ for epoch in range(num_epochs):
               f'{100 * correct / total}%')
     model.train()
 
+
+torch.save(model, "sparse_model.pth")
+
 print('\nTraining finished!')
 # Print final weights
 print("\nFinal weights:")
@@ -108,7 +82,6 @@ for i, layer in enumerate([model.fc1, model.fc2, model.fc3]):
 
 # Save weights as images
 print("\nSaving weights as images...")
-import matplotlib.pyplot as plt
 for i, layer in enumerate([model.fc1, model.fc2, model.fc3]):
     plt.figure(figsize=(10, 10))
     weights = layer.weight.data.cpu().numpy()
