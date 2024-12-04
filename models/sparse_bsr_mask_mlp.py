@@ -22,8 +22,9 @@ class SparseBSRLinear(nn.Module):
         self.p = p
 
         self.weight = nn.Parameter(torch.empty(out_features, in_features))
+        self.bias = nn.Parameter(torch.empty(out_features))
 
-        # nn.init.kaiming_uniform_(self.weight, a=np.sqrt(5))
+        nn.init.kaiming_uniform_(self.weight, a=np.sqrt(5))
 
         assert in_features % block_size == 0, "in_features must be divisible by block_size"
         assert out_features % block_size == 0, "out_features must be divisible by block_size"

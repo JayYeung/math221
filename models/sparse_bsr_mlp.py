@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 from torch.sparse import _triton_ops
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class SparseBSRLinear(nn.Module):
@@ -24,7 +28,7 @@ class SparseBSRLinear(nn.Module):
 
         for i in range(num_blocks_row):
             for j in range(num_blocks_col):
-                if torch.rand(1).item() <= p:
+                if torch.rand(1).item() >= p:
                     col_indices.append(j)
                     values.append(torch.randn(block_size, block_size))
 

@@ -9,25 +9,22 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
-from models.CNN import CNN
-from models.MLP import MLP
-from models.MLP_rand import MLP_rand
-# from models.MLP_rand_sparse import SparseMLP
+# from models.cnn import CNN
+# from models.mlp import MLP
+# from models.mlp_rand import MLP_rand
 
-from models.SparseBlockedMLP import SparseMLP
+from models.sparse_bsr_mlp import SparseMLP
+# from models.sparse_bsr_mask_mlp import SparseMLP  # DOESN'T WORK
 
 import time
 from tqdm import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-
-# Hyperparameters
 batch_size = 64
 learning_rate = 0.001
 epochs = 5
 
-# MNIST Dataset
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,))
@@ -41,12 +38,11 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 plot_df = []
 
-
 def train(model, criterion, optimizer, epochs):
     model.train()
     start_time = time.time()
 
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
 
@@ -79,8 +75,8 @@ def test(model, criterion):
     return acc, end_time - start_time
 
 
-for block_size, p in tqdm(product(2 ** np.arange(4, 8), np.linspace(0.1, 0.9, 9))):
-    print(f"\n\n BLOCK_SIZE={block_size}, p={p} \n\n")
+for block_size, p in product(2 ** np.arange(4, 8), np.linspace(0.1, 0.9, 9)):
+    print(f"\nBLOCK_SIZE={block_size}, p={p}")
 
     model = SparseMLP(p=p, block_size=block_size).to(device)
 
