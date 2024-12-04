@@ -24,16 +24,16 @@ start_itr = 1000  # Start iteration
 ramp_itr = 2000  # Ramp iteration
 end_itr = 3000  # End iteration
 
-print("Loading MNIST dataset...")
-# MNIST dataset
-train_dataset = datasets.MNIST(root='./data',
-                             train=True,
-                             transform=transforms.ToTensor(),
-                             download=True)
+print("Loading CIFAR-10 dataset...")
+# CIFAR-10 dataset
+train_dataset = datasets.CIFAR10(root='./data',
+                                train=True,
+                                transform=transforms.ToTensor(),
+                                download=True)
 
-test_dataset = datasets.MNIST(root='./data',
-                            train=False,
-                            transform=transforms.ToTensor())
+test_dataset = datasets.CIFAR10(root='./data',
+                               train=False,
+                               transform=transforms.ToTensor())
 
 print("Creating data loaders...")
 # Data loader
@@ -47,7 +47,7 @@ test_loader = DataLoader(dataset=test_dataset,
 
 # Train model with pruning
 print("\n=== Starting training with pruning ===")
-model = MLP(pruning_percent=.98, start_itr=2000)
+model = MLP(pruning_percent=.90, start_itr=2000)
 print("Created pruning model")
 
 # Loss and optimizer
@@ -76,7 +76,8 @@ for epoch in range(num_epochs):
         if (i+1) % 100 == 0:
             print(f'Training - Epoch [{epoch+1}/{num_epochs}], '
                   f'Step [{i+1}/{total_step}], '
-                  f'Loss: {loss.item():.4f}')
+                  f'Loss: {loss.item():.4f}, '
+                  f'Theta: {model.theta:.4f}')
 
     # Test the model
     print("\nEvaluating model...")

@@ -1,4 +1,5 @@
 import torch.nn as nn
+import math
 from torchinfo import summary
 
 class MLP(nn.Module):
@@ -7,9 +8,10 @@ class MLP(nn.Module):
         self.pruning_percent = pruning_percent
         self.start_itr = start_itr
         self.current_itr = 0
+        self.theta = 0.0
 
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(28 * 28, 1024)
+        self.fc1 = nn.Linear(32 * 32 * 3, 1024)
         self.fc2 = nn.Linear(1024, 512)
         self.fc3 = nn.Linear(512, 10)
         self.relu = nn.ReLU()
@@ -21,6 +23,10 @@ class MLP(nn.Module):
         """Update current iteration and apply pruning if needed"""
         self.current_itr += 1
         if self.start_itr <= self.current_itr:
+            # Calculate exponential growth factor
+            progress = (self.current_itr - self.start_itr) / 5000  # Assume 1000 iterations for full growth
+            current_theta = self.pruning_percent * (1 - math.exp(-5 * progress))  # -5 controls curve steepness
+            self.theta = max(0, min(current_theta, self.pruning_percent))  # Clamp between 0 and pruning_percent
             self.apply_threshold()
 
     def apply_threshold(self):
@@ -50,7 +56,7 @@ class MLP(nn.Module):
         # Calculate cutoff value based on percentile
         if block_sums:
             sorted_sums = sorted(block_sums)
-            cutoff_idx = int(len(sorted_sums) * self.pruning_percent)
+            cutoff_idx = int(len(sorted_sums) * self.theta)  # Use current theta instead of pruning_percent
             cutoff_value = sorted_sums[cutoff_idx]
 
             # Zero out blocks below cutoff
