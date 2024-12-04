@@ -64,7 +64,7 @@ for epoch in range(num_epochs):
         labels = labels.to(device)
 
         outputs = model(images)
-        loss = criterion(outputs, labels)
+        loss = model.compute_loss(criterion, outputs, labels)
 
         optimizer.zero_grad()
         loss.backward()

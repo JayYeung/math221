@@ -1,14 +1,17 @@
+import torch
 import torch.nn as nn
 import math
 from torchinfo import summary
 
 class MLP(nn.Module):
-    def __init__(self, pruning_percent, start_itr):
+    def __init__(self, pruning_percent, start_itr, group_size = 32, lasso_weight=1e-4):
         super(MLP, self).__init__()
         self.pruning_percent = pruning_percent
         self.start_itr = start_itr
         self.current_itr = 0
         self.theta = 0.0
+        self.group_size = group_size
+        self.lasso_weight = lasso_weight
 
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(32 * 32 * 3, 1024)
@@ -73,3 +76,28 @@ class MLP(nn.Module):
 
     def summary(self):
         summary(self, input_size=(1, 28, 28))
+
+    def compute_group_lasso(self):
+        """
+        Compute the group lasso regularization loss for fc2 weights.
+        Group lasso is computed by summing the norms of groups of weights.
+        """
+        weight = self.fc2.weight
+        rows, cols = weight.shape
+        group_lasso_loss = 0.0
+
+        # Group weights in blocks along the columns
+        num_groups = cols // self.group_size
+        for g in range(num_groups):
+            group_weights = weight[:, g * self.group_size : (g + 1) * self.group_size]
+            group_lasso_loss += torch.norm(group_weights, dim=1).sum()
+
+        return self.lasso_weight * group_lasso_loss
+
+    def compute_loss(self, criterion, outputs, targets, lasso=True):
+        base_loss = criterion(outputs, targets)
+        if not lasso:
+            return base_loss
+
+        group_lasso_loss = self.compute_group_lasso()
+        return base_loss + group_lasso_loss
