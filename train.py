@@ -7,10 +7,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-<<<<<<< HEAD
-from models.mlp_group_lasso import MLP_group_lasso
-from models.mlp_accuracy_based import MLP
-=======
 
 # from models.cnn import CNN
 from models.mlp import MLP
@@ -18,7 +14,6 @@ from models.mlp import MLP
 
 from models.sparse_bsr_mlp import SparseMLP
 # from models.sparse_bsr_mask_mlp import SparseMLP  # DOESN'T WORK
->>>>>>> 9eaef8de57ccf942999a347f2ad75b4f6fb9e63a
 
 import time
 from tqdm import tqdm
