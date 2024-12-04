@@ -1,18 +1,24 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from itertools import product
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
+
 from models.CNN import CNN
 from models.MLP import MLP
 from models.MLP_rand import MLP_rand
+from models.MLP_rand_sparse import SparseRandMLP
+
 import time
 from tqdm import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 # Hyperparameters
 batch_size = 64
@@ -33,9 +39,9 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 plot_df = []
 
-for p in tqdm(np.linspace(0.1, 0.9, 100)):
-    model = MLP_rand(p=p, block_size=4).to(device)
-    # model.summary()
+for block_size, p in tqdm(product(2 ** np.arange(1, 6), np.arange(0.1, 0.9, 0.1))):
+    model = SparseRandMLP(p=p, block_size=block_size).to(device)
+    model.summary()
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
