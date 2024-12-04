@@ -86,18 +86,3 @@ def test(model, criterion):
     acc = 100 * correct / total
 
     return acc
-
-# model = MLP()
-# model = model.to(device)
-
-model = MLP_group_lasso().to(device)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-train(model, criterion, optimizer, epochs)
-acc = test(model, criterion)
-
-print(acc)
-
-torch.save(model, "model.pth")
