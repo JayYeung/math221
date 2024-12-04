@@ -1,5 +1,6 @@
 import numpy as np
 from itertools import product
+import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -16,6 +17,8 @@ from models.sparse_bsr_mlp import SparseMLP
 
 import time
 from tqdm import tqdm
+
+from models.mlp_group_lasso import MLP_group_lasso
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -34,6 +37,23 @@ test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, d
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
+def see_weights(model, epoch):
+    for i, layer in enumerate([model.fc1, model.fc2, model.fc3]):
+        total_weights = layer.weight.data.numel()
+        zero_weights = torch.sum(torch.abs(layer.weight.data) < 1e-7).item()
+        sparsity = (zero_weights / total_weights) * 100
+        print(f"Layer {i+1} sparsity: {sparsity:.2f}% ({zero_weights}/{total_weights} weights are zero)")
+
+    for i, layer in enumerate([model.fc1, model.fc2, model.fc3]):
+        plt.figure(figsize=(10, 10))
+        weights = layer.weight.data.cpu().numpy()
+        plt.imshow(weights, cmap='seismic', interpolation='nearest')
+        plt.colorbar()
+        plt.title(f'MLP_group_lasso {epoch} Layer {i+1} Weights')
+        plt.savefig(f'weight_map_images/MLP_group_lasso_{epoch}_Layer{i+1}_weights.png')
+        plt.close()
+    print("Weight visualizations saved as PNG files")
+
 def train(model, criterion, optimizer, epochs):
     model.train()
 
@@ -42,15 +62,17 @@ def train(model, criterion, optimizer, epochs):
             data, target = data.to(device), target.to(device)
 
             outputs = model(data)
-            loss = criterion(outputs, target)
+            loss = model.compute_loss(criterion, outputs, target)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        see_weights(model, epoch)
 
 
 def test(model, criterion):
     model.eval()
+    start_time = time.time()
     correct = 0
     total = 0
 
@@ -65,8 +87,10 @@ def test(model, criterion):
 
     return acc
 
-model = MLP()
-model = model.to(device)
+# model = MLP()
+# model = model.to(device)
+
+model = MLP_group_lasso().to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
