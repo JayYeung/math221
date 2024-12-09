@@ -10,7 +10,7 @@ import torch.optim as optim
 # from models.mlp import MLP
 # from models.mlp_rand import MLP_rand
 from models.mlp_accuracy_based import MLPAccuracyPrune
-from models.sparse_bsr_mlp import SparseMLP
+# from models.sparse_bsr_mlp import SparseMLP
 # from models.sparse_bsr_mask_mlp import SparseMLP  # DOESN'T WORK
 
 import time
@@ -75,6 +75,7 @@ def test(model, criterion, test_loader):
             _, predicted = torch.max(outputs, 1)
             total += target.size(0)
             correct += (predicted == target).sum().item()
+
     acc = 100 * correct / total
 
     return acc
