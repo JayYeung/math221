@@ -56,9 +56,17 @@ class SparseBSRLinear(nn.Module):
 
     def forward(self, input):
         t1 = time.time()
+        torch.cuda.synchronize()
+        m1 = torch.cuda.memory_allocated()
+
         output = _triton_ops.bsr_dense_mm(self.sparse_bsr.to(device), input.to(device).T).T
+
+        torch.cuda.synchronize()
+        m2 = torch.cuda.memory_allocated()
         t2 = time.time()
 
+        print("HERE")
+        print(m2 - m1)
         # print("forward", t2 - t1)
 
         return output + self.bias.to(device)

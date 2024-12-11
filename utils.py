@@ -1,6 +1,6 @@
 import torch
 
-def to_bsr(matrix, block_size=16):
+def to_bsr(matrix, block_size):
     num_blocks_row = matrix.size(0) // block_size
     num_blocks_col = matrix.size(1) // block_size
 
@@ -15,7 +15,7 @@ def to_bsr(matrix, block_size=16):
                 j * block_size : (j + 1) * block_size
             ]
 
-            if not torch.all(block == 0):
+            if not torch.all(block <= 1e-16):
                 col_indices.append(j)
                 values.append(block.clone())
 

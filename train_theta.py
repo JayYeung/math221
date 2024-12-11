@@ -29,12 +29,12 @@ train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
 
-# model = SparseMLP(in_dimension=(28 * 28),
-#             out_dimension=10,
-#             pruning_percent=.95, start_itr=2000,
-#             block_size=32
-# )
-model = MLPAccuracyPrune(pruning_percent=.90, start_itr=2000, group_size=32)
+model = SparseMLP(in_dimension=(28 * 28),
+            out_dimension=10,
+            pruning_percent=.6, start_itr=2000,
+            block_size=32
+)
+# model = MLPAccuracyPrune(pruning_percent=.90, start_itr=2000, group_size=32)
 
 model = model.to(device)
 
@@ -86,7 +86,7 @@ for epoch in range(epochs):
     model.train()
 
 
-torch.save(model, "acc_sparse_model_32_90.pth")
+torch.save(model, "withcuda.pth")
 
 print('\nTraining finished!')
 # Print final weights

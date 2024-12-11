@@ -63,7 +63,17 @@ class SparseMLP(nn.Module):
     def forward(self, x):
         x = self.flatten(x)
         x = self.relu(self.fc1(x))
+
+        torch.cuda.synchronize()
+        m1 = torch.cuda.memory_allocated()
+
         x = self.relu(self.fc2(x))
+
+        torch.cuda.synchronize()
+        m2 = torch.cuda.memory_allocated()
+
+        print(m2 - m1)
+
         x = self.fc3(x)
         return x
 
