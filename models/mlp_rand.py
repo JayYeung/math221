@@ -2,14 +2,16 @@ import torch
 import torch.nn as nn
 from torchinfo import summary
 
-class MLP_rand(nn.Module):
-    def __init__(self, p=0.5, block_size=4, size=32):
-        super(MLP_rand, self).__init__()
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+class MLPRand(nn.Module):
+    def __init__(self, p=0.5, block_size=32):
+        super().__init__()
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(28 * 28, size)
-        self.fc2 = nn.Linear(size, size)
-        self.fc3 = nn.Linear(size, 10)
-        # self.fc4 = nn.Linear(128, 10)
+        self.fc1 = nn.Linear(28 * 28, 1024)
+        self.fc2 = nn.Linear(1024, 512)
+        self.fc3 = nn.Linear(512, 10)
         self.relu = nn.ReLU()
 
         # Create the blocked sparse mask for fc2
@@ -21,12 +23,13 @@ class MLP_rand(nn.Module):
         Create a blocked sparse mask for a given shape and proportion p.
         """
         mask = torch.ones(shape)
+        mask = mask.to(device)
 
         # Divide the weight matrix into blocks
         rows, cols = shape
         row_blocks = rows // block_size
         col_blocks = cols // block_size
-        
+
         zeroed = 0
 
         for i in range(row_blocks):
@@ -37,16 +40,17 @@ class MLP_rand(nn.Module):
                         j * block_size : (j + 1) * block_size,
                     ] = 0
                     zeroed += block_size ** 2
-        
+
         # print(f'Zeroed {zeroed} out of {rows * cols} weights, proportion = {zeroed / (rows * cols)} ({float(p)})')
-        
+
         return mask
 
     def forward(self, x):
         x = self.flatten(x)
         x = self.relu(self.fc1(x))
-        
+
         # Apply the blocked sparse mask to fc2 weights
+        self.mask = self.mask.to(device)
         with torch.no_grad():
             self.fc2.weight.mul_(self.mask)
 
@@ -55,5 +59,5 @@ class MLP_rand(nn.Module):
 
         return x
 
-    def summary(self):
-        summary(self, input_size=(1, 28, 28))
+    def update_iteration(*args):
+        pass

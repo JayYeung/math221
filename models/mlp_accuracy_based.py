@@ -93,5 +93,5 @@ class MLPAccuracyPrune(nn.Module):
         x = self.fc3(x)
         return x
 
-    def summary(self):
-        summary(self, input_size=(1, 3, 32, 32))
+    def compute_loss(self, criterion, outputs, targets):
+        return criterion(outputs, targets)

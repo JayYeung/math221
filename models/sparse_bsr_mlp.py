@@ -59,7 +59,7 @@ class SparseBSRLinear(nn.Module):
         output = _triton_ops.bsr_dense_mm(self.sparse_bsr.to(device), input.to(device).T).T
         t2 = time.time()
 
-        print("forward", t2 - t1)
+        # print("forward", t2 - t1)
 
         return output + self.bias.to(device)
 

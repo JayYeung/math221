@@ -1,3 +1,5 @@
+import json
+from math import prod
 from tqdm.utils import colorama
 import numpy as np
 from itertools import product
@@ -71,25 +73,61 @@ test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 # train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=True)
 # test_loader = DataLoader(dataset=test_dataset, batch_size=100, shuffle=False)
 
+
+
+
+import matplotlib.pyplot as plt
+
+SPARSITIES = [60, 80, 85, 90, 98]
+BLOCK_SIZES = [32, 64]
+
 criterion = nn.CrossEntropyLoss()
 
-model = torch.load("sparse_model.pth")
+results = {
+    (s, b): [] for s, b in product(SPARSITIES, BLOCK_SIZES)
+}
 
-t1 = time.time()
-acc = test(model, criterion, test_loader)
-t2 = time.time()
+for sparsity, block_size in product(SPARSITIES, BLOCK_SIZES):
+    print(f"\n\nsparsity = {sparsity}")
+    model = torch.load(f"./checkpoints/magnitude-based/sparse_model_{block_size}_{sparsity}.pth")
 
-print(acc, t2 - t1)
+    print(sum(model.fc2.weight.data.flatten() == 0) / (512 * 1024))
 
-blocked_model = BlockedMLP(model, 16)
-blocked_model = blocked_model.to(device)
+    t1 = time.time()
+    acc = test(model, criterion, test_loader)
+    t2 = time.time()
 
-blocked_model(torch.randn(16, 28 * 28).to(device))
-blocked_model(torch.randn(16, 28 * 28).to(device))
-blocked_model(torch.randn(16, 28 * 28).to(device))
+    reg = t2 - t1
+    print(acc, t2 - t1)
 
-t1 = time.time()
-acc = test(blocked_model, criterion, test_loader)
-t2 = time.time()
+    blocked_model = BlockedMLP(model, 16)
+    blocked_model = blocked_model.to(device)
 
-print(acc, t2 - t1)
+    blocked_model(torch.randn(16, 28 * 28).to(device))
+    blocked_model(torch.randn(16, 28 * 28).to(device))
+    blocked_model(torch.randn(16, 28 * 28).to(device))
+
+    t1 = time.time()
+    acc = test(blocked_model, criterion, test_loader)
+    t2 = time.time()
+    blocked = t2 - t1
+
+    results[(sparsity, block_size)].extend([acc, reg / blocked])
+
+    print(acc, t2 - t1)
+
+print(results)
+
+with open("results.json") as f:
+    json.dump(results, f)
+
+
+
+
+plt.plot(SPARSITIES, sorted([results[s][0] for s in product(SPARSITIES, BLOCK_SIZES)], reverse=True), label='accuracy')
+plt.savefig("acc.png")
+plt.close()
+
+plt.plot(SPARSITIES, sorted([results[s][1] for s in product(SPARSITIES, BLOCK_SIZES)]), label='speedup')
+plt.savefig("speedup.png")
+plt.close()

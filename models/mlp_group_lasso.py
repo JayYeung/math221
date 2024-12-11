@@ -3,15 +3,15 @@ import torch.nn as nn
 from torchinfo import summary
 
 class MLP_group_lasso(nn.Module):
-    def __init__(self, group_size=4, size1=512, size2=256, lasso_weight=1e-4):
+    def __init__(self, group_size=32, lasso_weight=1e-4):
         super(MLP_group_lasso, self).__init__()
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(28 * 28, size1)
-        self.fc2 = nn.Linear(size1, size2)
-        self.fc3 = nn.Linear(size2, 10)
+        self.fc1 = nn.Linear(28 * 28, 1024)
+        self.fc2 = nn.Linear(1024, 512)
+        self.fc3 = nn.Linear(512, 10)
         self.relu = nn.ReLU()
         self.group_size = group_size
-        self.lasso_weight = lasso_weight  
+        self.lasso_weight = lasso_weight
 
     def forward(self, x):
         x = self.flatten(x)
